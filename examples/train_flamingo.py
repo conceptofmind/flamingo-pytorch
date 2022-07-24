@@ -1,6 +1,11 @@
-from asyncio.log import logger
+import torch
+
 import colossalai
 from colossalai.logging import get_dist_logger, disable_existing_loggers
+from colossalai.core import global_context as gpc
+from colossalai.trainer import Trainer, hooks
+from colossalai.utils import MultiTimer
+from colossalai.nn.metric import Accuracy
 
 from vit_pytorch.vit import ViT
 from vit_pytorch.extractor import Extractor
@@ -73,6 +78,11 @@ def ViT_Trainer():
     # Training Loop
 
     trainer.fit(
-        
+        train_dataloader = train_dataloader,
+        epochs = epochs,
+        test_dataloader = test_dataloader,
+        hook_list = hook_list,
+        display_progress = True,
+        test_interval = test_interval
     )
 
