@@ -1,10 +1,13 @@
 import torch
 
+from torchvision.datasets import CIFAR10, ImageNet
+from torchvision import transforms as T
+
 import colossalai
 from colossalai.logging import get_dist_logger, disable_existing_loggers
 from colossalai.core import global_context as gpc
 from colossalai.trainer import Trainer, hooks
-from colossalai.utils import MultiTimer
+from colossalai.utils import MultiTimer, get_dataloader
 from colossalai.nn.metric import Accuracy
 
 from vit_pytorch.vit import ViT
@@ -14,7 +17,7 @@ def ViT_Trainer():
     assert torch.cuda.is_available()
     disable_existing_loggers()
 
-    colossalai.launch_from_torch(config='')
+    colossalai.launch_from_torch(config='./vit_config')
 
     vit = ViT(
         image_size = 256,
@@ -30,9 +33,53 @@ def ViT_Trainer():
 
     # setup dataloaders
 
-    def build_dataloaders()
+    train_transform = T.Compose([
+            T.Resize(args.image_size),
+            T.AutoAugment(policy = policy),
+            T.ToTensor(),
+            T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+    ])
 
-    train_dataloader, test_dataloader = build_dataloaders()
+    test_transform = T.Compose([
+            T.Resize(args.image_size),
+            T.ToTensor(),
+            T.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+    ])
+
+    train_dataset = ImageNet(
+        root = args.path_to_data,
+        train = True,
+        download = args.download_dataset,
+        transform = train_transform,
+    )
+        
+    test_dataset = ImageNet(
+        root = args.path_to_data,
+        train = False,
+        download = args.download_dataset,
+        transform = test_transform,
+    )    
+
+    train_loader = get_dataloader(
+        train_dataset, 
+        shuffle = args.shuffle,
+        batch_size = args.batch_size, 
+        seed = args.seed, 
+        add_sampler = args.add_sampler, 
+        drop_last = args.drop_last, 
+        pin_memory = args.pin_memory, 
+        num_workers = args.num_workers
+    )
+    
+    test_loader = get_dataloader(
+        test_dataset, 
+        batch_size = args.batch_size, 
+        seed = args.seed, 
+        add_sampler = False, 
+        drop_last = args.drop_last, 
+        pin_memory = args.pin_memory, 
+        num_workers = args.num_workers
+    )
 
     # loss function
 
